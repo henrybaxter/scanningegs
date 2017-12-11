@@ -1,0 +1,3 @@
+include README.rst
+include scanningegsinp/options.toml
+include scanningegsinp/template.egsinp

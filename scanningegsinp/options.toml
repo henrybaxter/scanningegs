@@ -1,0 +1,39 @@
+
+# name to put in all egsinp files
+name = "EXAMPLE"
+
+# directory to output egsinp files to
+folder = "example"
+
+# egsinp template to start from
+template = "template.egsinp"
+
+# only generate egsinp for one 'side'
+# takes half as much time, but requires reflecting
+# later eg using beamdpr
+reflect-later = false
+
+# number of histories to aim for in final product
+# so it will be divided between beamlets
+histories = 1e8
+
+# y (cm) length of target
+# note that RMAX_CM for xtube will be modified to be at least target-length / 2
+target-length = 75.0
+
+# angle (deg) of target
+target-angle = 45.0
+
+# x (cm) distance from electron source to target (origin)
+target-distance = 50.0
+
+# y (cm) of the electron beam
+beam-width = 0.2
+
+# z (cm) of the electron beam
+beam-height = 0.5
+
+# distance (cm) between incident electron beams
+# note this is not between points (axis) of beams
+# but rather between extents of beams
+beam-gap = 0.0
