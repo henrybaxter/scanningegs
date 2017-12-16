@@ -4,6 +4,7 @@ import os
 import shutil
 import argparse
 import logging
+import asyncio
 
 import toml
 
@@ -14,27 +15,6 @@ logger = logging.getLogger(__name__)
 DIR = os.path.dirname(__file__)
 DEFAULT_OPTIONS = os.path.join(DIR, 'options.toml')
 DEFAULT_TEMPLATE = os.path.join(DIR, 'template.egsinp')
-
-print(DEFAULT_OPTIONS)
-
-
-def generate_y(target_length, spacing, reflect):
-    logger.info('Generating beam positions')
-    offset = spacing / 2
-    y = offset
-    ymax = target_length / 2
-    i = 0
-    result = []
-    while y < ymax:
-        result.append(y)
-        i += 1
-        y = i * spacing + offset
-    if not reflect:
-        # need to reflect y values if not using reflection optimization
-        for y in result[:]:
-            result.insert(0, -y)
-    logger.info('Generated {} y values'.format(len(result)))
-    return result
 
 
 def parse_args():
@@ -68,6 +48,25 @@ def parse_args():
     return options
 
 
+def generate_y(target_length, spacing, reflect):
+    logger.info('Generating beam positions')
+    offset = spacing / 2
+    y = offset
+    ymax = target_length / 2
+    i = 0
+    result = []
+    while y < ymax:
+        result.append(y)
+        i += 1
+        y = i * spacing + offset
+    if not reflect:
+        # need to reflect y values if not using reflection optimization
+        for y in result[:]:
+            result.insert(0, -y)
+    logger.info('Generated {} y values'.format(len(result)))
+    return result
+
+
 def generate_templates(args, y_values):
     try:
         template = egsinp.parse_egsinp(open(args['template']).read())
@@ -81,19 +80,55 @@ def generate_templates(args, y_values):
     xtube['rmax_cm'] = min(xtube['rmax_cm'], args['target-length'] / 2)
     xtube['angelei'] = args['target-angle']
     template['title'] = args['name']
-    if os.path.exists(args['folder']):
-        shutil.rmtree(args['folder'])
-    os.makedirs(args['folder'])
+    try:
+        os.makedirs(args['egsinp-folder'])
+    except FileExistsError:
+        pass
     for i, y in enumerate(y_values):
         theta = math.atan(y / args['target-distance'])
         cos_x = -math.cos(theta)
         cos_y = math.copysign(math.sqrt(1 - cos_x * cos_x), y)
         template['uinc'] = cos_x
         template['vinc'] = cos_y
-        fn = os.path.join(args['folder'], '{}.egsinp'.format(i))
+        fn = os.path.join(args['egsinp-folder'], '{}.egsinp'.format(i))
         logger.debug('Writing to {}'.format(fn))
         with open(fn, 'w') as f:
             f.write(egsinp.unparse_egsinp(template))
+
+
+def translate_phasespaces(args, y_values):
+    futures = []
+    try:
+        os.makedirs(args['translated-folder'])
+    except FileExistsError:
+        pass
+    for i, y in enumerate(y_values):
+        ifname = os.path.join(args['egsphsp-folder'], '{}.egsphsp1'.format(i))
+        ofname = os.path.join(args['translated-folder'], '{}.egsphsp1'.format(i))
+        if not os.path.exists(ifname):
+            raise RuntimeError('Could not find expected input phase space file {}'.format(ifname))
+        futures.append(run_command(['beamdpr', 'translate', ifname, ofname, '-y', '({})'.format(y)]))
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+    loop.close()
+
+
+async def run_command(command, stdin=None, **kwargs):
+    logger.info('Running "{}"'.format(' '.join(command)))
+    process = await asyncio.create_subprocess_exec(
+        *command,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+        stdin=asyncio.subprocess.PIPE if stdin else None,
+        **kwargs)
+    stdout, stderr = await process.communicate(stdin)
+    stdout = stdout.decode('utf-8')
+    if process.returncode != 0:
+        message = 'Command failed: "{}"'.format(' '.join(command))
+        logger.error(message)
+        logger.error(stdout)
+        raise RuntimeError(message)
+    return stdout
 
 
 def main():
