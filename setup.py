@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(name='scanningegs',
-      version='0.2.4',
-      description='Generate EGSINP files for a scanning target',
+      version='0.0.1',
+      description='Generate EGSnrc files for a scanning target',
       url='http://github.com/henrybaxter/scanningegs',
       author='Henry Baxter',
       author_email='henry.baxter@gmail.com',
