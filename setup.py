@@ -11,6 +11,6 @@ setup(name='scanningegs',
       include_package_data=True,
       zip_safe=False,
       entry_points={
-          'console_scripts': ['scanningegs=scanningegs:main']
+          'console_scripts': ['scanningegs=scanningegs.scanningegs:main']
       },
       install_requires=['toml'])
