@@ -21,6 +21,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--make-template', action='store_true')
     parser.add_argument('--make-options', action='store_true')
+    parser.add_argument('--translate', action='store_true')
     parser.add_argument('--toml', default="options.toml")
     parser.add_argument('--template', default="template.egsinp")
     args = parser.parse_args()
@@ -97,6 +98,7 @@ def generate_templates(args, y_values):
 
 
 def translate_phasespaces(args, y_values):
+    logger.info("Attempting to translate phase spaces")
     futures = []
     try:
         os.makedirs(args['translated-folder'])
@@ -106,10 +108,12 @@ def translate_phasespaces(args, y_values):
         ifname = os.path.join(args['egsphsp-folder'], '{}.egsphsp1'.format(i))
         ofname = os.path.join(args['translated-folder'], '{}.egsphsp1'.format(i))
         if not os.path.exists(ifname):
-            raise RuntimeError('Could not find expected input phase space file {}'.format(ifname))
+            msg = 'Could not find expected input phase space file {}'.format(ifname)
+            logger.error(msg)
+            raise RuntimeError(msg)
         futures.append(run_command(['beamdpr', 'translate', ifname, ofname, '-y', '({})'.format(y)]))
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    loop.run_until_complete(asyncio.gather(*futures))
     loop.close()
 
 
@@ -149,7 +153,10 @@ def main():
     ))
     if args['reflect-later']:
         logger.info('This total after reflection!')
-    generate_templates(args, y_values)
+    if args['translate']:
+        translate_phasespaces(args, y_values)
+    else:
+        generate_templates(args, y_values)
 
 
 if __name__ == '__main__':
