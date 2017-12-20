@@ -4,5 +4,5 @@
 
 /*.egg-info
 
-template.egsinp
-options.toml
+./template.egsinp
+./options.toml
