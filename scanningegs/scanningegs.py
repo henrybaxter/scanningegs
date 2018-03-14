@@ -46,6 +46,14 @@ def parse_args():
         options[key] = float(options[key])
     for key in ints:
         options[key] = int(options[key])
+    if 'beam-shape' not in options:
+        options['beam-shape'] = 'rectangular'
+    if options['beam-shape'] not in ['circular', 'rectangular']:
+        print('Argument beam-shape must be "circular" or "rectangular"')
+        sys.exit(1)
+    if options['beam-shape'] == 'circular' and options['beam-height'] != options['beam-width']:
+        print('beam-shape is "circular" but height and width differ, aborting')
+        sys.exit(1)
     return options
 
 
@@ -75,8 +83,13 @@ def generate_templates(args, y_values):
         print('Could not find {}, try running with --make-template', args['template'])
         sys.exit(1)
     template['ncase'] = args['beamlet-histories']
-    template['ybeam'] = args['beam-width'] / 2
-    template['zbeam'] = args['beam-height'] / 2
+    if args['beam-shape'] == 'circular':
+        template['rbeam'] = args['beam-width'] / 2
+        template['isourc'] = '10'
+    else:
+        template['ybeam'] = args['beam-width'] / 2
+        template['zbeam'] = args['beam-height'] / 2
+        template['isourc'] = '13'
     xtube = template['cms'][0]
     xtube['rmax_cm'] = min(xtube['rmax_cm'], args['target-length'] / 2)
     xtube['angelei'] = args['target-angle']
@@ -91,6 +104,7 @@ def generate_templates(args, y_values):
         cos_y = math.copysign(math.sqrt(1 - cos_x * cos_x), y)
         template['uinc'] = cos_x
         template['vinc'] = cos_y
+        template['winc'] = 0.0
         fn = os.path.join(args['egsinp-folder'], '{}.egsinp'.format(i))
         logger.debug('Writing to {}'.format(fn))
         with open(fn, 'w') as f:

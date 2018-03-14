@@ -508,11 +508,20 @@ def parse_egsinp(text):
             ('xbeam', NonNegativeFloat()),
             ('ybeam', NonNegativeFloat())
         ]))
+    elif d['isourc'] == '10':
+        d.update(pick(lines, [
+            ('iqin', Integer()),
+            ('isourc', Word()),
+            ('rbeam', Float()),
+            ('uinc', Float()),
+            ('vinc', Float()),
+            ('zinc', Float())
+        ]))
     elif d['isourc'] == '13':
         d.update(pick(lines, [
             ('iqin', Integer()),
             ('isourc', Word()),
-            ('ybeam', PositiveFloat()),
+            ('ybeam', Float()),
             ('zbeam', Float()),
             ('uinc', Float()),
             ('vinc', Float())
@@ -639,6 +648,8 @@ def unparse_egsinp(d):
         lines.append(commalist(d, ('iqin', 'isourc', 'rbeam', 'uinc', 'vinc', 'winc')))
     elif d['isourc'] == '6':
         lines.append(commalist(d, ('iqin', 'isourc', 'xbeam0', 'ybeam0', 'xbeam', 'ybeam')))
+    elif d['isourc'] == '10':
+        lines.append(commalist(d, ('iqin', 'isourc', 'rbeam', 'uinc', 'vinc', 'winc')))
     elif d['isourc'] == '13':
         lines.append(commalist(d, ('iqin', 'isourc', 'ybeam', 'zbeam', 'uinc', 'vinc')))
     elif d['isourc'] == '21':

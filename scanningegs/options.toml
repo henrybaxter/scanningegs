@@ -41,6 +41,9 @@ beam-width = 0.2
 # z (cm) of the electron beam
 beam-height = 0.5
 
+# use rectangular for isourc 13, circular for isourc 10
+beam-shape = "rectangular"
+
 # distance (cm) between incident electron beams
 # note this is not between points (axis) of beams
 # but rather between extents of beams
